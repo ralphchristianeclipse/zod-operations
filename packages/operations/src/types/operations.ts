@@ -68,20 +68,21 @@ export type ZodOperationsQueryReturn<T> = Partial<{
 export type ZodOperationsClient<
   TSchema extends ZodObjectFlattened<any> = ZodObjectFlattened<any>,
   TContext extends any = any,
+  TInput extends TSchema["_input"] = TSchema["_input"],
   TOutput extends TSchema["_output"] = TSchema["_output"],
   TFlattened extends ExcludeByType<
-    FlattenObject<TOutput>,
+    FlattenObject<TInput>,
     object
-  > = ExcludeByType<FlattenObject<TOutput>, object>
+  > = ExcludeByType<FlattenObject<TInput>, object>
 > = {
   query: (
     params: ZodOperationsClientQueryParameters<TFlattened>,
-    context?: TContext
+    context?: { schema: TSchema; options?: TContext }
   ) => Promise<Partial<ZodOperationsQueryReturn<TOutput>>>;
 
   mutation: (
-    records: Partial<TOutput>[],
-    context?: TContext
+    records: Partial<TInput>[],
+    context?: { schema: TSchema; options?: TContext }
   ) => {
     total?: number;
     records?: TOutput[];

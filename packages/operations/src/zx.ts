@@ -1,7 +1,8 @@
 //@ts-nocheck
 import { compact } from "lodash";
 import { z } from "zod";
-import { FlattenObject, Flattened, IncludeByType } from "./types/utility";
+import { Flattened, IncludeByType } from "./types/utility";
+
 export type ZodNested<T extends z.ZodTypeAny = z.ZodTypeAny> = T;
 export const nested = <T extends z.ZodTypeAny>(
   zodType: T,
@@ -21,10 +22,10 @@ export const flatten = <
     string
   >
 >(
-  zodObject: T,
+  schema: T,
   fields: K[]
 ) => {
-  const transformedSchema = zodObject.transform<
+  const transformedSchema = schema.transform<
     Flattened<I, K>
     //@ts-expect-error
   >((data) => {
@@ -43,6 +44,7 @@ export const flatten = <
 
   return transformedSchema;
 };
+
 export function zodParseValuesFlatten<
   T extends z.ZodObject<any> | z.ZodEffects<z.ZodObject<any>>,
   Y extends any[]

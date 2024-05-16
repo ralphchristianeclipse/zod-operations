@@ -13,10 +13,13 @@ const main = async () => {
 
   const schema = zx.flatten(
     GenericModelSchema.extend({
-      type: zx.defaultLiteral("MailingEvent"),
+      type: zx.defaultLiteral("UsageReport"),
       attributes: z.object({
-        mailingListIds: z.array(z.string()),
-        emailTemplateId: z.string().nullish(),
+        module: z.string(),
+        action: z.string(),
+        userId: z.string(),
+        meta: z.any(),
+        description: z.string().nullish(),
       }),
     }),
     ["attributes"]
@@ -24,32 +27,19 @@ const main = async () => {
 
   const client = createOperations(schema);
   const res = await client.query({
-    filter: {
-      or: {
-        terms: [
-          {
-            __typename: ["1"],
-          },
-          {
-            code: ["1"],
-          },
-        ],
-        exists: ["__typename"],
-        ranges: [
-          {
-            field: "__typename",
-            gte: 1,
-          },
-        ],
-        search: [
-          {
-            fields: ["__typename"],
-            value: "",
-          },
-        ],
-      },
+    pagination: {
+      limit: 10,
     },
+    filter: {},
   });
+  const value = await client.mutation([
+    {
+      id: "new",
+      action: "test",
+      code: "test",
+    },
+    res?.records?.[0],
+  ]);
 };
 
 main();
