@@ -1,0 +1,18 @@
+{
+  "name": "opensearch-adapter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/credential-provider-node": "^3.577.0",
+    "@opensearch-project/opensearch": "^2.8.0",
+    "aws-opensearch-connector": "^1.2.0",
+    "zod-operations": "link:../operations"
+  }
+}
