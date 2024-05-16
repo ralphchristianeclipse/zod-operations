@@ -1,15 +1,12 @@
-import { z, ZodEffects, ZodObject } from "zod";
-import { ZodOperationsClient } from "./types/operations";
+import { ZodObjectFlattened, ZodOperationsClient } from "./types/operations";
 import * as zx from "./zx";
 import { groupBy, keyBy, mapValues, merge } from "lodash";
 
 export function create<
   TContext extends unknown,
-  T extends ZodObject<any> | ZodEffects<ZodObject<any>> =
-    | ZodObject<any>
-    | ZodEffects<ZodObject<any>>,
+  T extends ZodObjectFlattened<any> = ZodObjectFlattened<any>,
   TClient extends ZodOperationsClient<T> = ZodOperationsClient<T>
->(client: TClient, defaultContext: TContext) {
+>(client: TClient, defaultContext?: TContext) {
   return (schema: T) => {
     const mergeOptions = (context) => merge(defaultContext, context);
     async function query(
@@ -27,22 +24,14 @@ export function create<
       };
     }
 
-    async function mutation(
-      params: Parameters<TClient["mutation"]>[0],
-      context?: Parameters<TClient["mutation"]>[1]
-    ) {
-      //@ts-expect-error
-      const ids = params?.records?.map((record) => record?.id);
-      const found = await query(
-        {
-          ids,
-        },
-        context
-      );
+    async function check(records?: any[]) {
+      const ids = records?.map((record) => record?.id);
+      const found = await query({
+        ids,
+      });
       const foundRecordsById = keyBy(found?.records, "id");
-      const { update, create } = mapValues(
-        //@ts-expect-error
-        groupBy(params?.records, (record) =>
+      const { create, update } = mapValues(
+        groupBy(records, (record) =>
           foundRecordsById?.[record?.id] ? "update" : "create"
         ),
         (values) =>
@@ -50,6 +39,16 @@ export function create<
             merge(foundRecordsById?.[record?.id] || {}, record)
           )
       );
+      return {
+        create,
+        update,
+      };
+    }
+    async function mutation(
+      params: Parameters<TClient["mutation"]>[0],
+      context?: Parameters<TClient["mutation"]>[1]
+    ) {
+      const recordsByAction = await check(params?.records);
       const result = await client.mutation(params, {
         schema,
         options: mergeOptions(context),
@@ -57,8 +56,8 @@ export function create<
       const output = zx.zodParseValuesFlatten(schema, result?.records!);
       return {
         items: {
-          update,
-          create,
+          update: recordsByAction?.update,
+          create: recordsByAction?.create,
         },
         ...result,
         ...output,

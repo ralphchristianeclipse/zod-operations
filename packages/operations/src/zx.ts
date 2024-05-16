@@ -1,4 +1,3 @@
-//@ts-nocheck
 import { compact } from "lodash";
 import { z } from "zod";
 import { Flattened, IncludeByType } from "./types/utility";

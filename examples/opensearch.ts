@@ -32,14 +32,16 @@ const main = async () => {
     },
     filter: {},
   });
-  const value = await client.mutation([
-    {
-      id: "new",
-      action: "test",
-      code: "test",
-    },
-    res?.records?.[0],
-  ]);
+  const value = await client.mutation({
+    records: [
+      {
+        id: "new",
+        action: "test",
+        code: "test",
+      },
+      res?.records?.[0],
+    ],
+  });
 };
 
 main();

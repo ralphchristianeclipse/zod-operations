@@ -33,7 +33,7 @@ export const parseFilters = (value) => [
   })) || []),
 ];
 export const createOperations = create({
-  async query(params, context) {
+  query: async (params, context) => {
     const client = await getClient();
     const type: string =
       //@ts-expect-error
@@ -77,7 +77,11 @@ export const createOperations = create({
       records: result?.body?.hits?.hits?.map((item) => item?._source),
     };
   },
-  async mutation(records, context) {
-    console.log({ records });
+  mutation: async (params, context) => {
+    console.log({ params });
+    return {
+      total: 0,
+      records: [],
+    };
   },
 });

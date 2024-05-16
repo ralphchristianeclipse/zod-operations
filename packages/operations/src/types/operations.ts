@@ -1,7 +1,5 @@
-//@ts-nocheck
 import type { ZodEffects, ZodObject, ZodRawShape } from "zod";
-import { conditionPrefixes } from "../constants";
-import {
+import type {
   ArrayValues,
   DeepPartial,
   ExcludeByType,
@@ -26,8 +24,8 @@ export type ZodOperationsFilters<K, V> = {
 export type ZodObjectFlattened<T extends ZodRawShape = ZodRawShape> =
   | ZodObject<T>
   | ZodEffects<ZodObject<T>>;
-export type ZodOperationConditionPrefix = (typeof conditionPrefixes)[number];
-type ZodOperationsClientQueryParameters<
+
+export type ZodOperationsClientQueryParameters<
   V extends object,
   K extends keyof V = keyof V
 > = Partial<{
@@ -58,6 +56,11 @@ type ZodOperationsClientQueryParameters<
   >;
 }>;
 
+export type ZodOperationsContext<
+  TSchema extends ZodObjectFlattened<any> = ZodObjectFlattened<any>,
+  TContext extends any = any
+> = { schema: TSchema; options?: TContext };
+
 export type ZodOperationsQueryReturn<T> = Partial<{
   total: number;
   records: T[];
@@ -65,9 +68,9 @@ export type ZodOperationsQueryReturn<T> = Partial<{
   page: number;
   aggregations: any;
 }>;
-export type ZodOperationsClient<
+
+export type ZodOperationsInputOutputFlattened<
   TSchema extends ZodObjectFlattened<any> = ZodObjectFlattened<any>,
-  TContext extends any = any,
   TInput extends TSchema["_input"] = TSchema["_input"],
   TOutput extends TSchema["_output"] = TSchema["_output"],
   TFlattened extends ExcludeByType<
@@ -75,16 +78,35 @@ export type ZodOperationsClient<
     object
   > = ExcludeByType<FlattenObject<TInput>, object>
 > = {
-  query: (
-    params: ZodOperationsClientQueryParameters<TFlattened>,
-    context?: { schema: TSchema; options?: TContext }
-  ) => Promise<Partial<ZodOperationsQueryReturn<TOutput>>>;
+  input: TInput;
+  output: TOutput;
+  flattened: TFlattened;
+  schema: TSchema;
+};
 
+export type ZodOperationsClient<
+  TSchema extends ZodObjectFlattened<any> = ZodObjectFlattened<any>,
+  TContext extends any = any,
+  TOptions extends ZodOperationsInputOutputFlattened<TSchema> = ZodOperationsInputOutputFlattened<TSchema>,
+  C extends ZodOperationsContext<TSchema, TContext> = ZodOperationsContext<
+    TSchema,
+    TContext
+  >
+> = {
+  query: (
+    params: ZodOperationsClientQueryParameters<TOptions["flattened"]>,
+    context?: C
+  ) => Promise<Partial<ZodOperationsQueryReturn<TOptions["output"]>>>;
   mutation: (
-    records: Partial<TInput>[],
-    context?: { schema: TSchema; options?: TContext }
-  ) => {
-    total?: number;
-    records?: TOutput[];
-  };
+    params: Partial<{
+      records: Partial<TOptions["input"]>[];
+      action: "create" | "update" | "remove";
+    }>,
+    context?: C
+  ) => Promise<
+    Partial<{
+      total?: number;
+      records?: TOptions["output"][];
+    }>
+  >;
 };
