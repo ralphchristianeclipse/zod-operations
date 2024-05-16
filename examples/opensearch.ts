@@ -50,7 +50,6 @@ const main = async () => {
       },
     },
   });
-  console.log([res]);
 };
 
 main();

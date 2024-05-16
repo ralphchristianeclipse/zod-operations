@@ -1,7 +1,7 @@
 //@ts-nocheck
 import { compact } from "lodash";
 import { z } from "zod";
-import { FlattenObject, Flattened, IncludeByType } from "./utility";
+import { FlattenObject, Flattened, IncludeByType } from "./types/utility";
 export type ZodNested<T extends z.ZodTypeAny = z.ZodTypeAny> = T;
 export const nested = <T extends z.ZodTypeAny>(
   zodType: T,

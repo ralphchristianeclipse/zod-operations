@@ -1,6 +1,6 @@
 //@ts-nocheck
 import type { ZodEffects, ZodObject, ZodRawShape } from "zod";
-import { conditionPrefixes } from "./constants";
+import { conditionPrefixes } from "../constants";
 import {
   ArrayValues,
   DeepPartial,

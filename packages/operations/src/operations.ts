@@ -1,5 +1,5 @@
 import { z, ZodEffects, ZodObject } from "zod";
-import { ZodOperationsClient } from "./types";
+import { ZodOperationsClient } from "./types/operations";
 import * as zx from "./zx";
 
 export function initialize<
