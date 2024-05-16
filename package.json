@@ -7,8 +7,7 @@
     "example": "examples"
   },
   "workspaces": [
-    "packages/*",
-    "examples/*"
+    "packages/*"
   ],
   "devDependencies": {
     "@types/lodash": "^4.17.1",
@@ -16,7 +15,7 @@
     "typescript": "^5.4.5"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "turbo build"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +25,7 @@
     "@opensearch-project/opensearch": "^2.8.0",
     "aws-opensearch-connector": "^1.2.0",
     "lodash": "^4.17.21",
+    "turbo": "^1.13.3",
     "zod": "^3.23.8"
   }
 }

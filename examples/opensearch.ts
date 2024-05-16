@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { zx } from "zod-operations/src";
-import { createOperations } from "zod-operations-opensearch-client/src";
+import { zx } from "zod-operations";
+import { createOperations } from "zod-operations-opensearch-client";
 const main = async () => {
   const GenericModelSchema = z.object({
     __typename: zx.defaultLiteral("GenericModel"),

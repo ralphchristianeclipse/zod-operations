@@ -1,7 +1,6 @@
-import { initialize } from "zod-operations/src";
+import { initialize, ZodObjectFlattened } from "zod-operations";
 import { getClient } from "./client";
 import { merge } from "lodash";
-import { ZodObjectFlattened } from "zod-operations/src/types";
 
 export const createOperations = <T extends ZodObjectFlattened>(
   schema: T,
