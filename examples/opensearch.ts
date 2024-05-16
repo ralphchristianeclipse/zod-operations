@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { zx } from "zod-operations";
-import { createOperations } from "zod-operations-opensearch-client";
+import { create } from "zod-operations-opensearch-client";
 const main = async () => {
   const GenericModelSchema = z.object({
     __typename: zx.defaultLiteral("GenericModel"),
@@ -11,7 +11,7 @@ const main = async () => {
     description: z.string().nullish(),
   });
 
-  const schema = zx.flatten(
+  const schema = zx.model(
     GenericModelSchema.extend({
       type: zx.defaultLiteral("UsageReport"),
       attributes: z.object({
@@ -25,23 +25,23 @@ const main = async () => {
     ["attributes"]
   );
 
-  const client = createOperations(schema);
+  const client = create(schema);
   const res = await client.query({
     pagination: {
       limit: 10,
+      from: 20,
     },
     filter: {},
   });
-  const value = await client.mutation({
-    records: [
-      {
-        id: "new",
-        action: "test",
-        code: "test",
-      },
-      res?.records?.[0],
-    ],
-  });
+  const value = await client.save([
+    {
+      id: "new",
+      action: "test",
+      code: "test",
+    },
+    res?.records?.[0],
+  ]);
+  const output = await res.next();
 };
 
 main();
