@@ -1,7 +1,7 @@
 import { create } from "zod-operations";
 import { getClient } from "./client";
 import { merge } from "lodash";
-
+import { z } from "zod";
 export const parseFilters = (value) => [
   ...(value?.terms?.flatMap(
     (term) =>
@@ -32,7 +32,7 @@ export const parseFilters = (value) => [
     },
   })) || []),
 ];
-export const createOperations = create({
+export default create({
   query: async (params, context) => {
     const client = await getClient();
     const type: string =

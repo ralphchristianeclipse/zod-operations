@@ -4,6 +4,7 @@ import type {
   DeepPartial,
   ExcludeByType,
   FlattenObject,
+  IncludeByType,
 } from "./utility";
 
 export type ZodOperationsFilters<K, V> = {
@@ -21,7 +22,7 @@ export type ZodOperationsFilters<K, V> = {
     fields: K[];
   }[];
 };
-export type ZodObjectFlattened<T extends ZodRawShape = ZodRawShape> =
+export type ZodObjectModel<T extends ZodRawShape = ZodRawShape> =
   | ZodObject<T>
   | ZodEffects<ZodObject<T>>;
 
@@ -57,7 +58,7 @@ export type ZodOperationsClientQueryParameters<
 }>;
 
 export type ZodOperationsContext<
-  TSchema extends ZodObjectFlattened<any> = ZodObjectFlattened<any>,
+  TSchema extends ZodObjectModel<any> = ZodObjectModel<any>,
   TContext extends any = any
 > = { schema: TSchema; options?: TContext };
 
@@ -68,9 +69,11 @@ export type ZodOperationsQueryReturn<T> = Partial<{
   page: number;
   aggregations: any;
 }>;
-
+export type ZodOperationsSchemaObjectKeys<
+  TSchema extends ZodObjectModel<any> = ZodObjectModel<any>
+> = Extract<keyof IncludeByType<TSchema["_input"], object>, string>;
 export type ZodOperationsInputOutputFlattened<
-  TSchema extends ZodObjectFlattened<any> = ZodObjectFlattened<any>,
+  TSchema extends ZodObjectModel<any> = ZodObjectModel<any>,
   TInput extends TSchema["_input"] = TSchema["_input"],
   TOutput extends TSchema["_output"] = TSchema["_output"],
   TFlattened extends ExcludeByType<
@@ -85,7 +88,7 @@ export type ZodOperationsInputOutputFlattened<
 };
 
 export type ZodOperationsClient<
-  TSchema extends ZodObjectFlattened<any> = ZodObjectFlattened<any>,
+  TSchema extends ZodObjectModel<any> = ZodObjectModel<any>,
   TContext extends any = any,
   TOptions extends ZodOperationsInputOutputFlattened<TSchema> = ZodOperationsInputOutputFlattened<TSchema>,
   C extends ZodOperationsContext<TSchema, TContext> = ZodOperationsContext<

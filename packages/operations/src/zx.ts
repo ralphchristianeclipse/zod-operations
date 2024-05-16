@@ -1,6 +1,7 @@
 import { compact } from "lodash";
 import { z } from "zod";
 import { Flattened, IncludeByType } from "./types/utility";
+import { ZodOperationsSchemaObjectKeys } from "./types";
 
 export type ZodNested<T extends z.ZodTypeAny = z.ZodTypeAny> = T;
 export const nested = <T extends z.ZodTypeAny>(
@@ -13,13 +14,10 @@ export const nested = <T extends z.ZodTypeAny>(
 };
 export const defaultLiteral = (value: string) =>
   z.literal(value).default(value);
-export const flatten = <
+export const model = <
   T extends z.ZodObject<any> = z.ZodObject<any>,
   I extends T["_input"] = T["_input"],
-  K extends Extract<keyof IncludeByType<I, object>, string> = Extract<
-    keyof IncludeByType<I, object>,
-    string
-  >
+  K extends ZodOperationsSchemaObjectKeys<T> = ZodOperationsSchemaObjectKeys<T>
 >(
   schema: T,
   fields: K[]
@@ -56,7 +54,7 @@ export function zodParseValuesFlatten<
   });
   const records = compact(parsed?.map((record) => record?.data));
   return {
-    parsed,
+    parsed: () => parsed,
     records,
   };
 }

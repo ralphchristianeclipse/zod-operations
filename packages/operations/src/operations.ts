@@ -1,13 +1,18 @@
-import { ZodObjectFlattened, ZodOperationsClient } from "./types/operations";
+import {
+  ZodObjectModel,
+  ZodOperationsClient,
+  ZodOperationsInputOutputFlattened,
+} from "./types/operations";
 import * as zx from "./zx";
 import { groupBy, keyBy, mapValues, merge } from "lodash";
 
 export function create<
   TContext extends unknown,
-  T extends ZodObjectFlattened<any> = ZodObjectFlattened<any>,
+  T extends ZodObjectModel<any> = ZodObjectModel<any>,
   TClient extends ZodOperationsClient<T> = ZodOperationsClient<T>
 >(client: TClient, defaultContext?: TContext) {
   return (schema: T) => {
+    type ZO = ZodOperationsInputOutputFlattened<T>;
     const mergeOptions = (context) => merge(defaultContext, context);
     async function query(
       params: Parameters<TClient["query"]>[0],
@@ -18,13 +23,48 @@ export function create<
         options: mergeOptions(context),
       });
       const output = zx.zodParseValuesFlatten(schema, result?.records!);
+      const pageCount = Math.ceil(
+        (result?.total || 0) / (params?.pagination?.limit || 1)
+      );
+      const pageNumber =
+        Math.floor(
+          (params?.pagination?.from || 1) / (params?.pagination?.limit || 1)
+        ) + 1;
+      const pages = {
+        count: pageCount,
+        number: pageNumber,
+        next:
+          Math.min(pageNumber + 1, pageCount) *
+          (params?.pagination?.limit || 1),
+        previous:
+          Math.max(pageNumber - 1, 0) * (params?.pagination?.limit || 1),
+      };
       return {
         ...result,
         ...output,
+        pages,
+        next: () =>
+          query(
+            merge(params, {
+              pagination: {
+                from: pages.next,
+              },
+            }),
+            context
+          ),
+        prev: () =>
+          query(
+            merge(params, {
+              pagination: {
+                from: pages.previous,
+              },
+            }),
+            context
+          ),
       };
     }
 
-    async function check(records?: any[]) {
+    async function check(records: ZO["input"][]) {
       const ids = records?.map((record) => record?.id);
       const found = await query({
         ids,
@@ -44,28 +84,45 @@ export function create<
         update,
       };
     }
-    async function mutation(
-      params: Parameters<TClient["mutation"]>[0],
+    async function save(
+      records: ZO["input"][],
       context?: Parameters<TClient["mutation"]>[1]
     ) {
-      const recordsByAction = await check(params?.records);
-      const result = await client.mutation(params, {
-        schema,
-        options: mergeOptions(context),
-      });
-      const output = zx.zodParseValuesFlatten(schema, result?.records!);
+      const recordsByAction = await check(records);
+      const resultCreated = recordsByAction?.create?.length
+        ? await client.mutation(
+            {
+              action: "create",
+              records: recordsByAction?.create,
+            },
+            {
+              schema,
+              options: mergeOptions(context),
+            }
+          )
+        : undefined;
+      const resultUpdated = recordsByAction?.update?.length
+        ? await client.mutation(
+            {
+              action: "update",
+              records: recordsByAction?.update,
+            },
+            {
+              schema,
+              options: mergeOptions(context),
+            }
+          )
+        : undefined;
       return {
-        items: {
-          update: recordsByAction?.update,
-          create: recordsByAction?.create,
+        result: {
+          created: resultCreated,
+          updated: resultUpdated,
         },
-        ...result,
-        ...output,
       };
     }
     return {
       query,
-      mutation,
+      save,
     };
   };
 }
