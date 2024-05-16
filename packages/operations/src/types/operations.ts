@@ -1,24 +1,28 @@
 import type { ZodEffects, ZodObject, ZodRawShape } from "zod";
 import type {
   ArrayValues,
+  AsyncResolver,
   DeepPartial,
   ExcludeByType,
   FlattenObject,
   IncludeByType,
+  Resolver,
+  Unwrap,
 } from "./utility";
+export type StringNumber = string | number;
 
 export type ZodOperationsFilters<K, V> = {
   terms: ArrayValues<V>[];
   ranges: {
     field: K;
-    gte: string | number;
-    lte: string | number;
-    gt: string | number;
-    lt: string | number;
+    gte: StringNumber;
+    lte: StringNumber;
+    gt: StringNumber;
+    lt: StringNumber;
   }[];
   exists: K[];
   search: {
-    value: string | number;
+    value: StringNumber;
     fields: K[];
   }[];
 };
@@ -30,7 +34,7 @@ export type ZodOperationsClientQueryParameters<
   V extends object,
   K extends keyof V = keyof V
 > = Partial<{
-  ids: (string | number)[];
+  ids: StringNumber[];
   filter: DeepPartial<{
     not: ZodOperationsFilters<K, V>;
     and: ZodOperationsFilters<K, V>;
@@ -39,7 +43,7 @@ export type ZodOperationsClientQueryParameters<
   pagination: Partial<{
     from: number;
     limit: number;
-    cursor: string | number;
+    cursor: StringNumber;
   }>;
   select: K[];
   sort: {
@@ -56,6 +60,9 @@ export type ZodOperationsClientQueryParameters<
     >
   >;
 }>;
+export type ContextCallback = (...args: any[]) => object | Promise<object>;
+export type ContextType<TNewContext extends object | ContextCallback> =
+  TNewContext extends ContextCallback ? Unwrap<TNewContext> : TNewContext;
 
 export type ZodOperationsContext<
   TSchema extends ZodObjectModel<any> = ZodObjectModel<any>,
@@ -65,14 +72,16 @@ export type ZodOperationsContext<
 export type ZodOperationsQueryReturn<T> = Partial<{
   total: number;
   records: T[];
-  cursor: string | number;
+  cursor: StringNumber;
   page: number;
   aggregations: any;
 }>;
+
 export type ZodOperationsSchemaObjectKeys<
   TSchema extends ZodObjectModel<any> = ZodObjectModel<any>
 > = Extract<keyof IncludeByType<TSchema["_input"], object>, string>;
-export type ZodOperationsInputOutputFlattened<
+
+export type ZodOperationsTypes<
   TSchema extends ZodObjectModel<any> = ZodObjectModel<any>,
   TInput extends TSchema["_input"] = TSchema["_input"],
   TOutput extends TSchema["_output"] = TSchema["_output"],
@@ -87,29 +96,35 @@ export type ZodOperationsInputOutputFlattened<
   schema: TSchema;
 };
 
-export type ZodOperationsClient<
-  TSchema extends ZodObjectModel<any> = ZodObjectModel<any>,
-  TContext extends any = any,
-  TOptions extends ZodOperationsInputOutputFlattened<TSchema> = ZodOperationsInputOutputFlattened<TSchema>,
-  C extends ZodOperationsContext<TSchema, TContext> = ZodOperationsContext<
-    TSchema,
-    TContext
-  >
-> = {
-  query: (
-    params: ZodOperationsClientQueryParameters<TOptions["flattened"]>,
-    context?: C
-  ) => Promise<Partial<ZodOperationsQueryReturn<TOptions["output"]>>>;
-  mutation: (
-    params: Partial<{
-      records: Partial<TOptions["input"]>[];
-      action: "create" | "update" | "remove";
-    }>,
-    context?: C
-  ) => Promise<
-    Partial<{
-      total?: number;
-      records?: TOptions["output"][];
-    }>
-  >;
-};
+export namespace ZodOperations {
+  export type Model<T extends ZodRawShape = ZodRawShape> =
+    | ZodObject<T>
+    | ZodEffects<ZodObject<T>>;
+  export type Client<
+    TSchema extends Model<any> = Model<any>,
+    TContext extends object | ContextCallback = object | ContextCallback,
+    C extends ContextType<TContext> = ContextType<TContext>,
+    Types extends ZodOperationsTypes<TSchema, TContext> = ZodOperationsTypes<
+      TSchema,
+      TContext
+    >
+  > = {
+    query: AsyncResolver<
+      ZodOperationsClientQueryParameters<Types["flattened"]>,
+      C,
+      Partial<ZodOperationsQueryReturn<Types["output"]>>
+    >;
+    mutation: AsyncResolver<
+      Partial<{
+        records: Partial<Types["input"]>[];
+        ids?: StringNumber[];
+        action: "create" | "update" | "remove";
+      }>,
+      C,
+      Partial<{
+        total?: number;
+        records?: Types["output"][];
+      }>
+    >;
+  };
+}

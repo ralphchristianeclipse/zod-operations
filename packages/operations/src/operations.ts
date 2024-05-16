@@ -1,35 +1,35 @@
-import {
+import type {
+  StringNumber,
   ZodObjectModel,
-  ZodOperationsClient,
-  ZodOperationsInputOutputFlattened,
-} from "./types/operations";
+  ZodOperations,
+  ZodOperationsTypes,
+} from "./types";
 import * as zx from "./zx";
 import { groupBy, keyBy, mapValues, merge } from "lodash";
 
 export function create<
-  TContext extends unknown,
+  TContext extends any = any,
   T extends ZodObjectModel<any> = ZodObjectModel<any>,
-  TClient extends ZodOperationsClient<T> = ZodOperationsClient<T>
+  TClient extends ZodOperations.Client<T> = ZodOperations.Client<T>
 >(client: TClient, defaultContext?: TContext) {
   return (schema: T) => {
-    type ZO = ZodOperationsInputOutputFlattened<T>;
-    const mergeOptions = (context) => merge(defaultContext, context);
+    type ZO = ZodOperationsTypes<T>;
+    const getContext = (context) => ({
+      schema,
+      options: merge(defaultContext),
+    });
     async function query(
       params: Parameters<TClient["query"]>[0],
       context?: Parameters<TClient["query"]>[1]
     ) {
-      const result = await client.query(params, {
-        schema,
-        options: mergeOptions(context),
-      });
+      const result = await client.query(params, getContext(context));
       const output = zx.zodParseValuesFlatten(schema, result?.records!);
       const pageCount = Math.ceil(
         (result?.total || 0) / (params?.pagination?.limit || 1)
       );
-      const pageNumber =
-        Math.floor(
-          (params?.pagination?.from || 1) / (params?.pagination?.limit || 1)
-        ) + 1;
+      const pageNumber = Math.floor(
+        (params?.pagination?.from || 1) / (params?.pagination?.limit || 1)
+      );
       const pages = {
         count: pageCount,
         number: pageNumber,
@@ -95,10 +95,7 @@ export function create<
               action: "create",
               records: recordsByAction?.create,
             },
-            {
-              schema,
-              options: mergeOptions(context),
-            }
+            getContext(context)
           )
         : undefined;
       const resultUpdated = recordsByAction?.update?.length
@@ -107,10 +104,7 @@ export function create<
               action: "update",
               records: recordsByAction?.update,
             },
-            {
-              schema,
-              options: mergeOptions(context),
-            }
+            getContext(context)
           )
         : undefined;
       return {
@@ -120,9 +114,24 @@ export function create<
         },
       };
     }
+
+    async function remove(ids: StringNumber[], context) {
+      const result = ids?.length
+        ? await client.mutation(
+            {
+              action: "remove",
+              ids,
+            },
+            getContext(context)
+          )
+        : undefined;
+      return result;
+    }
+
     return {
       query,
       save,
+      remove,
     };
   };
 }

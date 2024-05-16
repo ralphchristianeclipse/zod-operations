@@ -1,6 +1,6 @@
 // Flatten entity
 export type DeepPartial<T> = {
-	[P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
 export type Flattened<I, K extends keyof I> = Omit<I, K> & I[K];
 export type ExcludeByType<T, E> = {
@@ -18,7 +18,18 @@ export type ArrayValues<T> = {
 export type FlattenObject<TValue> = CollapseEntries<
   CreateObjectEntries<TValue, TValue>
 >;
+export type Unwrap<TType> = TType extends (...args: any[]) => infer R
+  ? Awaited<R>
+  : TType;
 
+export type AsyncResolver<TParams, TContext, TResult> = (
+  params: TParams,
+  context: TContext
+) => Promise<TResult>;
+export type Resolver<TParams, TContext, TResult> = (
+  params: TParams,
+  context: TContext
+) => TResult;
 type Entry = { key: string; value: unknown };
 type EmptyEntry<TValue> = { key: ""; value: TValue };
 type ExcludedTypes = Date | Set<unknown> | Map<unknown, unknown>;

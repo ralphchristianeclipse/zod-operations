@@ -1,4 +1,4 @@
-import { create } from "zod-operations";
+import { create, zx } from "zod-operations";
 import { getClient } from "./client";
 import { merge } from "lodash";
 import { z } from "zod";
@@ -32,56 +32,90 @@ export const parseFilters = (value) => [
     },
   })) || []),
 ];
-export default create({
-  query: async (params, context) => {
-    const client = await getClient();
-    const type: string =
-      //@ts-expect-error
-      context?.schema?.shape?.type?.value ||
-      //@ts-expect-error
-      context?.schema?.shape?.type?._def?.defaultValue?.() ||
-      //@ts-expect-error
-      context?.schema?.innerType()?.shape?.type?.value ||
-      //@ts-expect-error
-      context?.schema?.innerType()?.shape?.type?._def?.defaultValue?.();
-    const index = `mbdev-gm-${type?.toLowerCase()}`;
-    const payload = {
-      index,
-      body: merge(
-        {
-          track_total_hits: true,
-          _source: params?.select,
-          query: params?.ids
-            ? { ids: { values: params?.ids } }
-            : {
-                bool: {
-                  filter: [...parseFilters(params?.filter?.and)],
-                  should: [...parseFilters(params?.filter?.or)],
-                  must_not: [...parseFilters(params?.filter?.not)],
+
+export default create(
+  {
+    query: async (params, context) => {
+      const client = await getClient();
+      //@ts-ignore
+      const index = context?.options(context)?.table?.index();
+      const payload = {
+        index,
+        body: merge(
+          {
+            track_total_hits: true,
+            _source: params?.select,
+            query: params?.ids
+              ? { ids: { values: params?.ids } }
+              : {
+                  bool: {
+                    filter: [...parseFilters(params?.filter?.and)],
+                    should: [...parseFilters(params?.filter?.or)],
+                    must_not: [...parseFilters(params?.filter?.not)],
+                  },
                 },
+            from: params?.pagination?.from,
+            size: params?.pagination?.limit,
+            sort: params?.sort?.map((sort) => ({
+              [sort.field]: {
+                order: sort.order,
               },
-          from: params?.pagination?.from,
-          size: params?.pagination?.limit,
-          sort: params?.sort?.map((sort) => ({
-            [sort.field]: {
-              order: sort.order,
-            },
-          })),
+            })),
+          },
+          //@ts-ignore
+          context?.options?.esQueryBody
+        ),
+      };
+      const result = await client.search(payload);
+      return {
+        total: result?.body?.hits?.total?.value,
+        records: result?.body?.hits?.hits?.map((item) => item?._source),
+      };
+    },
+    mutation: async (params, context) => {
+      switch (params.action) {
+        case "create":
+          break;
+        case "update":
+          break;
+        case "remove":
+          break;
+      }
+      return {
+        total: 0,
+        records: [],
+      };
+    },
+  },
+  (context) => {
+    return {
+      table: {
+        type: "type",
+        field: "__typename",
+        instance: "mbdev",
+        index: () => {
+          const tableFieldType: string = zx.getSchemaShapeFieldValue(
+            context?.schema!,
+            context?.options(context)?.table?.type!
+          );
+          const tableField: string = zx.getSchemaShapeFieldValue(
+            context?.schema!,
+            context?.options(context)?.table?.field!
+          );
+          const index =
+            tableField === "GenericModel"
+              ? `${
+                  context?.options(context)?.table?.instance
+                }-gm-${tableFieldType?.toLowerCase()}`
+              : `${
+                  context?.options(context)?.table?.instance
+                }-${tableFieldType.toLowerCase()}`;
+          return index;
         },
-        context?.options?.esQueryBody
-      ),
+      },
+      esQueryBody: {
+        track_total_hits: true,
+      },
     };
-    const result = await client.search(payload);
-    return {
-      total: result?.body?.hits?.total?.value,
-      records: result?.body?.hits?.hits?.map((item) => item?._source),
-    };
-  },
-  mutation: async (params, context) => {
-    console.log({ params });
-    return {
-      total: 0,
-      records: [],
-    };
-  },
-});
+  }
+);

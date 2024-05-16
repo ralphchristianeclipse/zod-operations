@@ -11,7 +11,7 @@ const main = async () => {
     description: z.string().nullish(),
   });
 
-  const schema = zx.model(
+  const { transformed } = zx.schema(
     GenericModelSchema.extend({
       type: zx.defaultLiteral("UsageReport"),
       attributes: z.object({
@@ -22,10 +22,12 @@ const main = async () => {
         description: z.string().nullish(),
       }),
     }),
-    ["attributes"]
+    {
+      fields: ["attributes"],
+    }
   );
 
-  const client = create(schema);
+  const client = create(transformed);
   const res = await client.query({
     pagination: {
       limit: 10,
@@ -41,7 +43,9 @@ const main = async () => {
     },
     res?.records?.[0],
   ]);
-  const output = await res.next();
+  const output1 = await res.next();
+  const output2 = await output1.next();
+  const output3 = await output2.next();
 };
 
 main();
