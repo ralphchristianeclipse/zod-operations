@@ -38,7 +38,7 @@ export default create(
     query: async (params, context) => {
       const client = await getClient();
       //@ts-ignore
-      const index = context?.options(context)?.table?.index();
+      const index = context?.options(context)?.table?.index;
       const payload = {
         index,
         body: merge(
@@ -88,30 +88,27 @@ export default create(
     },
   },
   (context) => {
+    const table = {
+      type: "type",
+      field: "__typename",
+      instance: "mbdev",
+    };
+    const tableFieldType: string = zx.getSchemaShapeFieldValue(
+      context?.schema!,
+      table.type
+    );
+    const tableField: string = zx.getSchemaShapeFieldValue(
+      context?.schema!,
+      table.field
+    );
+    const index =
+      tableField === "GenericModel"
+        ? `${table.instance}-gm-${tableFieldType?.toLowerCase()}`
+        : `${table.instance}-${tableFieldType.toLowerCase()}`;
     return {
       table: {
-        type: "type",
-        field: "__typename",
-        instance: "mbdev",
-        index: () => {
-          const tableFieldType: string = zx.getSchemaShapeFieldValue(
-            context?.schema!,
-            context?.options(context)?.table?.type!
-          );
-          const tableField: string = zx.getSchemaShapeFieldValue(
-            context?.schema!,
-            context?.options(context)?.table?.field!
-          );
-          const index =
-            tableField === "GenericModel"
-              ? `${
-                  context?.options(context)?.table?.instance
-                }-gm-${tableFieldType?.toLowerCase()}`
-              : `${
-                  context?.options(context)?.table?.instance
-                }-${tableFieldType.toLowerCase()}`;
-          return index;
-        },
+        ...table,
+        index,
       },
       esQueryBody: {
         track_total_hits: true,
