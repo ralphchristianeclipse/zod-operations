@@ -34,11 +34,7 @@ export function zodSafeParse<T extends z.ZodObject<any>>(
   const result = zodSchema.safeParse(input);
 
   return {
-    //FIXME: help
-    //@ts-ignore
     error: result?.error,
-    //FIXME: help
-    //@ts-ignore
     data: result?.data as z.infer<T>,
     item: input as z.infer<T>,
   };

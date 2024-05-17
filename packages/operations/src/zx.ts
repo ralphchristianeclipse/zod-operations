@@ -1,15 +1,15 @@
 import { z } from "zod";
 import {
   Flattened,
+  PathKeys,
   ZodObjectModel,
-  ZodOperationsSchemaObjectKeys,
 } from "./types";
 import { compact } from "lodash";
 
 export const schema = <
   T extends z.ZodObject<any> = z.ZodObject<any>,
   I extends T["_input"] = T["_input"],
-  K extends ZodOperationsSchemaObjectKeys<T> = ZodOperationsSchemaObjectKeys<T>
+  K extends PathKeys<T["_input"]> = PathKeys<T["_input"]>
 >(
   schema: T,
   options: {

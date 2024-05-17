@@ -1,4 +1,11 @@
 // Flatten entity
+export type StringNumber = string | number;
+export type PathKeys<T extends object, O extends object = object> = Extract<
+  keyof IncludeByType<T, O>,
+  string
+>;
+export type Paths<T> = ExcludeByType<FlattenObject<T>, object>;
+
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
@@ -22,14 +29,11 @@ export type Unwrap<TType> = TType extends (...args: any[]) => infer R
   ? Awaited<R>
   : TType;
 
-export type AsyncResolver<TParams, TContext, TResult> = (
-  params: TParams,
-  context: TContext
-) => Promise<TResult>;
 export type Resolver<TParams, TContext, TResult> = (
   params: TParams,
   context: TContext
-) => TResult;
+) => Promise<TResult> | TResult;
+
 type Entry = { key: string; value: unknown };
 type EmptyEntry<TValue> = { key: ""; value: TValue };
 type ExcludedTypes = Date | Set<unknown> | Map<unknown, unknown>;
