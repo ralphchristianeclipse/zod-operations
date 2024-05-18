@@ -34,8 +34,10 @@ export const parseFilters = (value) => [
 ];
 
 export default <T extends z.ZodObject<any>>(schema: T) => {
-  //@ts-expect-error
-  const transformedSchema = zx.schema(schema, ["attributes"]);
+  const transformedSchema = zx.schema(schema, {
+    //@ts-expect-error
+    fields: ["attributes"],
+  });
   const createContext = () => {
     const table = {
       type: "type",
