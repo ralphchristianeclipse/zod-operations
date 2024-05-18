@@ -67,6 +67,6 @@ export const getSchemaShapeFieldValue = <
   //@ts-expect-error
   schema?.shape?.[field]?._def?.defaultValue?.() ||
   //@ts-expect-error
-  schema?.innerType()?.shape?.[field]?.value ||
+  schema?.innerType?.()?.shape?.[field]?.value ||
   //@ts-expect-error
-  schema?.innerType()?.shape?.[field]?._def?.defaultValue?.();
+  schema?.innerType?.()?.shape?.[field]?._def?.defaultValue?.();

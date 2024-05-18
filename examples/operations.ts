@@ -55,7 +55,7 @@ export default <T extends z.ZodObject<any>>(schema: T) => {
     const index =
       tableField === "GenericModel"
         ? `${table.instance}-gm-${tableFieldType?.toLowerCase()}`
-        : `${table.instance}-${tableFieldType.toLowerCase()}`;
+        : `${table.instance}-${tableField?.toLowerCase()}`;
     return {
       table: {
         ...table,
