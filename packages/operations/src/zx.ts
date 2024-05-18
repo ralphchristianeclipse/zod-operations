@@ -1,5 +1,5 @@
 import { ZodEffects, ZodObject, ZodRawShape, z } from "zod";
-import { Flattened, PathKeys, ZodObjectModel } from "./types";
+import { Flattened, PathKeys } from "./types";
 import { compact } from "lodash";
 
 export const schema = <
@@ -29,10 +29,7 @@ export const schema = <
     return output;
   });
 
-  return {
-    transformed,
-    schema,
-  };
+  return transformed;
 };
 
 export const defaultLiteral = (value: string) =>

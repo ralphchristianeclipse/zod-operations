@@ -33,89 +33,102 @@ export const parseFilters = (value) => [
   })) || []),
 ];
 
-const createContext = (context) => {
-  const table = {
-    type: "type",
-    field: "__typename",
-    instance: "mbdev",
-  };
-  const tableFieldType: string = zx.getSchemaShapeFieldValue(
-    context?.schema!,
-    table.type
-  );
-  const tableField: string = zx.getSchemaShapeFieldValue(
-    context?.schema!,
-    table.field
-  );
-  const index =
-    tableField === "GenericModel"
-      ? `${table.instance}-gm-${tableFieldType?.toLowerCase()}`
-      : `${table.instance}-${tableFieldType.toLowerCase()}`;
-  return {
-    table: {
-      ...table,
-      index,
-    },
-    esQueryBody: {
-      track_total_hits: true,
-    },
-  };
-};
 export default <T extends z.ZodObject<any>>(schema: T) => {
-  return builder<T["_input"], T["_output"]>({
-    query: async (params, context) => {
-      const client = await getClient();
-      const index = context?.table?.index;
-      const transformedParams = {
-        _source: params?.fields,
-        query: params?.ids
-          ? { ids: { values: params?.ids } }
-          : {
-              bool: {
-                filter: [...parseFilters(params?.filter?.and)],
-                should: [...parseFilters(params?.filter?.or)],
-                must_not: [...parseFilters(params?.filter?.not)],
-              },
-            },
-        from: params?.pagination?.from,
-        size: params?.pagination?.limit,
-        sort: params?.sort?.map((sort) => ({
-          [sort.field]: {
-            order: sort.order,
-          },
-        })),
-      };
-      const payload = {
+  //@ts-expect-error
+  const transformedSchema = zx.schema(schema, ["attributes"]);
+  const createContext = () => {
+    const table = {
+      type: "type",
+      field: "__typename",
+      instance: "mbdev",
+    };
+    const tableFieldType: string = zx.getSchemaShapeFieldValue(
+      schema!,
+      table.type
+    );
+    const tableField: string = zx.getSchemaShapeFieldValue(
+      schema!,
+      table.field
+    );
+    const index =
+      tableField === "GenericModel"
+        ? `${table.instance}-gm-${tableFieldType?.toLowerCase()}`
+        : `${table.instance}-${tableFieldType.toLowerCase()}`;
+    return {
+      table: {
+        ...table,
         index,
-        body: merge(transformedParams, context?.query?.body),
-      };
-      const result = await client.search(payload);
-      return {
-        total: result?.body?.hits?.total?.value,
-        records: result?.body?.hits?.hits?.map((item) => item?._source),
-      };
-    },
-    mutation: async (params, context) => {
-      switch (params.action) {
-        case "create":
-          break;
-        case "update":
-          break;
-        case "remove":
-          break;
-      }
-      return {
-        total: 0,
-        records: [],
-      };
-    },
-    transformer: {
-      output: (records) => {
-        const results = records.map((record) => schema.parse(record));
-        return results;
       },
-      id: (record) => record?.id,
+      query: {
+        body: { track_total_hits: true },
+      },
+    };
+  };
+  return builder<
+    T["_input"],
+    (typeof transformedSchema)["_output"],
+    ReturnType<typeof createContext>
+  >(
+    {
+      query: async (params, context) => {
+        const client = await getClient();
+        const index = context?.table?.index;
+        const transformedParams = {
+          _source: params?.fields,
+          query: params?.ids
+            ? { ids: { values: params?.ids } }
+            : {
+                bool: {
+                  filter: [...parseFilters(params?.filter?.and)],
+                  should: [...parseFilters(params?.filter?.or)],
+                  must_not: [...parseFilters(params?.filter?.not)],
+                },
+              },
+          from: params?.pagination?.from,
+          size: params?.pagination?.limit,
+          sort: params?.sort?.map((sort) => ({
+            [sort.field]: {
+              order: sort.order,
+            },
+          })),
+        };
+        const payload = {
+          index,
+          body: merge(transformedParams, context?.query?.body),
+        };
+        const result = await client.search(payload);
+        return {
+          total: result?.body?.hits?.total?.value,
+          records: result?.body?.hits?.hits?.map((item) => item?._source),
+        };
+      },
+      mutation: async (params, context) => {
+        switch (params.action) {
+          case "create":
+            break;
+          case "update":
+            break;
+          case "remove":
+            break;
+        }
+        return {
+          total: 0,
+          records: [],
+        };
+      },
+      transformer: {
+        //@ts-expect-error
+        validate: (record) => {
+          const result = transformedSchema.safeParse(record);
+          return {
+            error: result.error,
+            success: result.success,
+            data: result?.data,
+          };
+        },
+        id: (record) => record?.id,
+      },
     },
-    context: createContext,
-  });
+    createContext
+  );
 };

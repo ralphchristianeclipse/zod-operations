@@ -1,19 +1,34 @@
-import type { ClientOptions, Paths, PromiseCallback, QueryOptions, StringNumber } from "./types";
+import type {
+  ClientOptions,
+  Paths,
+  PromiseCallback,
+  QueryOptions,
+  StringNumber,
+} from "./types";
 
 import { groupBy, keyBy, mapValues, merge } from "lodash";
+
 export function builder<
   TInput extends object = object,
   TOutput extends object = object,
+  TContext extends object = object,
   TContextCallback extends PromiseCallback = PromiseCallback,
-  TClient extends ClientOptions<TInput, TContextCallback> = ClientOptions<TInput, TContextCallback>
->(client: TClient) {
+  TClient extends ClientOptions<TInput, TOutput, TContext> = ClientOptions<
+    TInput,
+    TOutput,
+    TContext
+  >
+>(client: TClient, contextCallback: TContextCallback) {
   async function query(params: QueryOptions<Paths<TInput>>, context?: any) {
-    const newContext = await client.context(context);
+    const newContext = (await contextCallback(context)) as TContext;
     const result = await client.query(params, newContext);
-    const output: TOutput[] = client.transformer.output(
-      result?.records! as TInput[],
-      newContext
-    );
+    const validated = result?.records!?.map((record) => ({
+      ...client.transformer.validate(record, newContext),
+      input: record as TInput,
+    }));
+    const items = validated
+      ?.filter((item) => item?.success)
+      ?.map((item) => item?.data);
     const pageCount = Math.ceil(
       (result?.total || 0) / (params?.pagination?.limit || 1)
     );
@@ -28,8 +43,11 @@ export function builder<
       previous: Math.max(pageNumber - 1, 0) * (params?.pagination?.limit || 1),
     };
     return {
-      result,
-      output,
+      data: {
+        result,
+        validated,
+        items,
+      },
       pages,
       next: () =>
         query(
@@ -60,19 +78,14 @@ export function builder<
       },
       context
     );
-    const foundRecordsById = keyBy(found?.output, "id");
+    const foundRecordsById = keyBy(found?.data?.items, "id");
     const { create, update } = mapValues(
       groupBy(records, (record) =>
-        foundRecordsById?.[client.transformer.id(record)]
-          ? "update"
-          : "create"
+        foundRecordsById?.[client.transformer.id(record)] ? "update" : "create"
       ),
       (values) =>
         values?.map((record) =>
-          merge(
-            foundRecordsById?.[client.transformer.id(record)] || {},
-            record
-          )
+          merge(foundRecordsById?.[client.transformer.id(record)] || {}, record)
         )
     );
     return {
@@ -82,7 +95,7 @@ export function builder<
   }
 
   async function save(records: Partial<TInput>[], context?: any) {
-    const newContext = await client.context(context);
+    const newContext = (await contextCallback(context)) as TContext;
     //@ts-expect-error
     const recordsByAction = await check(records, newContext);
     const resultCreated = recordsByAction?.create?.length
@@ -112,7 +125,7 @@ export function builder<
   }
 
   async function remove(ids: StringNumber[], context) {
-    const newContext = await client.context(context);
+    const newContext = (await contextCallback(context)) as TContext;
     const result = ids?.length
       ? await client.mutation(
           {

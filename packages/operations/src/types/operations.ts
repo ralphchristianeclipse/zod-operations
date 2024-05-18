@@ -4,8 +4,6 @@ import type {
   Paths,
   StringNumber,
   PromiseResult,
-  PromiseType,
-  PromiseCallback,
 } from "./utility";
 
 export type Filters<K, V> = {
@@ -55,33 +53,41 @@ export type QueryOptions<
   >;
 }>;
 
-export type QueryReturn<T extends object[]> = {
+export type QueryReturn<T> = {
   total: number;
-  records: T;
+  records: T[];
   cursor: StringNumber;
   page: number;
   aggregations: any;
 };
 
 export type Actions = "create" | "update" | "remove";
-export type Transformer<TInput, TContext> = {
-  input?: <T extends object[]>(records: TInput[], context: TContext) => T;
-  output: <T extends object[]>(records: TInput[], context: TContext) => T;
+export type Transformer<
+  TInput extends object,
+  TOutput extends object,
+  TContext = any
+> = {
+  validate: (record: TInput, context: TContext) => {
+    data: TOutput;
+    error: unknown;
+    success: boolean;
+  };
   id: (record: TInput) => StringNumber;
 };
 export type ClientOptions<
   TInput extends object,
-  TContextCallback extends PromiseCallback = PromiseCallback,
-  TContext extends PromiseType<TContextCallback> = PromiseType<TContextCallback>,
-  TTransformer extends Transformer<TInput, TContext> = Transformer<
+  TOutput extends object,
+  TContext extends object = object,
+  TTransformer extends Transformer<TInput, TOutput, TContext> = Transformer<
     TInput,
+    TOutput,
     TContext
   >
 > = {
   query: (
     params: QueryOptions<Paths<TInput>>,
     context: TContext
-  ) => PromiseResult<Partial<QueryReturn<ReturnType<TTransformer["output"]>>>>;
+  ) => PromiseResult<Partial<QueryReturn<TInput>>>;
   mutation: (
     params: Partial<{
       records: Partial<TInput>[];
@@ -92,9 +98,8 @@ export type ClientOptions<
   ) => PromiseResult<
     Partial<{
       total?: number;
-      records?: ReturnType<TTransformer["output"]>;
+      records?: TOutput[];
     }>
   >;
   transformer: TTransformer;
-  context: TContextCallback;
 };
