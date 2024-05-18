@@ -18,13 +18,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@aws-sdk/credential-provider-node": "^3.577.0",
-    "@opensearch-project/opensearch": "^2.8.0",
-    "aws-opensearch-connector": "^1.2.0",
-    "lodash": "^4.17.21",
     "packages": "link:G:/Development/Personal/zod-operations/packages",
     "tsup": "^8.0.2",
-    "turbo": "^1.13.3",
-    "zod": "^3.23.8"
+    "turbo": "^1.13.3"
   }
 }
