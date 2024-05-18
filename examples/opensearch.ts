@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { zx } from "zod-operations";
+import { zx } from "../packages/operations";
 import { Client } from "@opensearch-project/opensearch";
 import builder from "./operations";
 import { defaultProvider } from "@aws-sdk/credential-provider-node";
@@ -37,7 +37,7 @@ const main = async () => {
     description: z.string().nullish(),
   });
 
-  const { transformed } = zx.schema(
+  const { schema } = zx.schema(
     GenericModelSchema.extend({
       type: zx.defaultLiteral("UsageReport"),
       attributes: z.object({
@@ -53,12 +53,13 @@ const main = async () => {
     }
   );
 
-  const client = builder.create(transformed);
+  const client = builder(schema);
   const res = await client.query({
     pagination: {
       limit: 10,
       from: 20,
     },
+    fields: ['__typename']
   });
   const value = await client.save([
     {
@@ -66,7 +67,7 @@ const main = async () => {
       action: "test",
       code: "test",
     },
-    res?.records?.[0],
+    res?.output?.[0]
   ]);
   const output1 = await res.next();
 

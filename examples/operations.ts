@@ -1,4 +1,4 @@
-import { builder, zx } from "zod-operations";
+import { builder, zx } from "../packages/operations";
 import { getClient } from "./client";
 import { merge } from "lodash";
 import { z } from "zod";
@@ -61,8 +61,8 @@ const createContext = (context) => {
     },
   };
 };
-export default builder(
-  {
+export default <T extends z.ZodObject<any>>(schema: T) => {
+  return builder<T["_input"], T["_output"]>({
     query: async (params, context) => {
       const client = await getClient();
       const index = context?.table?.index;
@@ -87,7 +87,7 @@ export default builder(
       };
       const payload = {
         index,
-        body: merge(transformedParams, context?.esQueryBody),
+        body: merge(transformedParams, context?.query?.body),
       };
       const result = await client.search(payload);
       return {
@@ -109,6 +109,13 @@ export default builder(
         records: [],
       };
     },
-  },
-  createContext
-);
+    transformer: {
+      output: (records) => {
+        const results = records.map((record) => schema.parse(record));
+        return results;
+      },
+      id: (record) => record?.id,
+    },
+    context: createContext,
+  });
+};

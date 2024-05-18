@@ -1,9 +1,5 @@
-import { z } from "zod";
-import {
-  Flattened,
-  PathKeys,
-  ZodObjectModel,
-} from "./types";
+import { ZodEffects, ZodObject, ZodRawShape, z } from "zod";
+import { Flattened, PathKeys, ZodObjectModel } from "./types";
 import { compact } from "lodash";
 
 export const schema = <
@@ -58,6 +54,11 @@ export function zodParseValuesFlatten<
     records,
   };
 }
+
+export type ZodObjectModel<T extends ZodRawShape = ZodRawShape> =
+  | ZodObject<T>
+  | ZodEffects<ZodObject<T>>;
+
 export const getSchemaShapeFieldValue = <
   T extends ZodObjectModel<any> = ZodObjectModel<any>
 >(

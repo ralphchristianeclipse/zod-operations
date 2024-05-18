@@ -1,4 +1,9 @@
 // Flatten entity
+export type PromiseResult<T> = Promise<T> | T;
+export type PromiseCallback = (...args: any[]) => PromiseResult<object>;
+export type PromiseType<T extends object | PromiseCallback> =
+  T extends PromiseCallback ? Unwrap<T> : T;
+
 export type StringNumber = string | number;
 export type PathKeys<T extends object, O extends object = object> = Extract<
   keyof IncludeByType<T, O>,

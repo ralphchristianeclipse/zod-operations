@@ -1,5 +1,5 @@
 {
-  "name": "opensearch-adapter",
+  "name": "examples",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,7 +12,6 @@
   "dependencies": {
     "@aws-sdk/credential-provider-node": "^3.577.0",
     "@opensearch-project/opensearch": "^2.8.0",
-    "aws-opensearch-connector": "^1.2.0",
-    "zod-operations": "workspace:*"
+    "aws-opensearch-connector": "^1.2.0"
   }
 }

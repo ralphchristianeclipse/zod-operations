@@ -1,24 +1,12 @@
-import type { ZodEffects, ZodObject, ZodRawShape } from "zod";
 import type {
   ArrayValues,
-  Resolver,
   DeepPartial,
   Paths,
   StringNumber,
-  Unwrap,
+  PromiseResult,
+  PromiseType,
+  PromiseCallback,
 } from "./utility";
-
-export type ZodObjectModel<T extends ZodRawShape = ZodRawShape> =
-  | ZodObject<T>
-  | ZodEffects<ZodObject<T>>;
-
-export type ContextCallback = (...args: any[]) => object | Promise<object>;
-export type ContextType<T extends object | ContextCallback> =
-  T extends ContextCallback ? Unwrap<T> : T;
-
-export type Model<T extends ZodRawShape = ZodRawShape> =
-  | ZodObject<T>
-  | ZodEffects<ZodObject<T>>;
 
 export type Filters<K, V> = {
   terms: ArrayValues<V>[];
@@ -67,36 +55,46 @@ export type QueryOptions<
   >;
 }>;
 
-export type QueryReturn<T extends object> = {
+export type QueryReturn<T extends object[]> = {
   total: number;
-  records: T[];
+  records: T;
   cursor: StringNumber;
   page: number;
   aggregations: any;
 };
 
 export type Actions = "create" | "update" | "remove";
-
-export type Client<
+export type Transformer<TInput, TContext> = {
+  input?: <T extends object[]>(records: TInput[], context: TContext) => T;
+  output: <T extends object[]>(records: TInput[], context: TContext) => T;
+  id: (record: TInput) => StringNumber;
+};
+export type ClientOptions<
   TInput extends object,
-  TOutput extends object,
-  TContext extends object
+  TContextCallback extends PromiseCallback = PromiseCallback,
+  TContext extends PromiseType<TContextCallback> = PromiseType<TContextCallback>,
+  TTransformer extends Transformer<TInput, TContext> = Transformer<
+    TInput,
+    TContext
+  >
 > = {
-  query: Resolver<
-    QueryOptions<Paths<TInput>>,
-    TContext,
-    Partial<QueryReturn<TOutput>>
-  >;
-  mutation: Resolver<
-    Partial<{
+  query: (
+    params: QueryOptions<Paths<TInput>>,
+    context: TContext
+  ) => PromiseResult<Partial<QueryReturn<ReturnType<TTransformer["output"]>>>>;
+  mutation: (
+    params: Partial<{
       records: Partial<TInput>[];
       ids: StringNumber[];
       action: Actions;
     }>,
-    TContext,
+    context: TContext
+  ) => PromiseResult<
     Partial<{
       total?: number;
-      records?: TOutput[];
+      records?: ReturnType<TTransformer["output"]>;
     }>
   >;
+  transformer: TTransformer;
+  context: TContextCallback;
 };
