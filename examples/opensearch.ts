@@ -37,21 +37,16 @@ const main = async () => {
     description: z.string().nullish(),
   });
 
-  const { schema } = zx.schema(
-    GenericModelSchema.extend({
-      type: zx.defaultLiteral("UsageReport"),
-      attributes: z.object({
-        module: z.string(),
-        action: z.string(),
-        userId: z.string(),
-        meta: z.any(),
-        description: z.string().nullish(),
-      }),
+  const schema = GenericModelSchema.extend({
+    type: zx.defaultLiteral("UsageReport"),
+    attributes: z.object({
+      module: z.string(),
+      action: z.string(),
+      userId: z.string(),
+      meta: z.any(),
+      description: z.string().nullish(),
     }),
-    {
-      fields: ["attributes"],
-    }
-  );
+  });
 
   const client = builder(schema);
   const res = await client.query({
@@ -59,15 +54,13 @@ const main = async () => {
       limit: 10,
       from: 20,
     },
-    fields: ['__typename']
   });
   const value = await client.save([
     {
       id: "new",
-      action: "test",
       code: "test",
     },
-    res?.output?.[0]
+    res?.data?.items?.[0],
   ]);
   const output1 = await res.next();
 
