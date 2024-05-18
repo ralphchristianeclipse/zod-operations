@@ -33,16 +33,16 @@ export const parseFilters = (value) => [
   })) || []),
 ];
 
-export default <T extends z.ZodObject<any>>(schema: T) => {
+export default <T extends z.ZodObject<any>>(schema: T, instance: string) => {
   const transformedSchema = zx.schema(schema, {
     //@ts-expect-error
     fields: ["attributes"],
   });
-  const createContext = () => {
+  const createContext = async () => {
     const table = {
       type: "type",
       field: "__typename",
-      instance: "mbdev",
+      instance,
     };
     const tableFieldType: string = zx.getSchemaShapeFieldValue(
       schema!,
@@ -56,6 +56,7 @@ export default <T extends z.ZodObject<any>>(schema: T) => {
       tableField === "GenericModel"
         ? `${table.instance}-gm-${tableFieldType?.toLowerCase()}`
         : `${table.instance}-${tableField?.toLowerCase()}`;
+    const client = await getClient();
     return {
       table: {
         ...table,
@@ -64,16 +65,16 @@ export default <T extends z.ZodObject<any>>(schema: T) => {
       query: {
         body: { track_total_hits: true },
       },
+      client: client as Readonly<typeof client>,
     };
   };
   return builder<
     T["_input"],
     (typeof transformedSchema)["_output"],
-    ReturnType<typeof createContext>
+    Awaited<ReturnType<typeof createContext>>
   >(
     {
       query: async (params, context) => {
-        const client = await getClient();
         const index = context?.table?.index;
         const transformedParams = {
           _source: params?.fields,
@@ -98,7 +99,7 @@ export default <T extends z.ZodObject<any>>(schema: T) => {
           index,
           body: merge(transformedParams, context?.query?.body),
         };
-        const result = await client.search(payload);
+        const result = await context.client.search(payload);
         return {
           total: result?.body?.hits?.total?.value,
           records: result?.body?.hits?.hits?.map((item) => item?._source),

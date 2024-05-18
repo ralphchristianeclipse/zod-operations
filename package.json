@@ -1,17 +1,22 @@
 {
-  "name": "zod-operations",
+  "name": "root",
   "version": "1.0.0",
   "description": "",
   "workspaces": [
     "packages/*"
   ],
   "devDependencies": {
+    "@changesets/cli": "^2.27.2",
     "@types/lodash": "^4.17.1",
     "@types/node": "^20.12.12",
     "typescript": "^5.4.5"
   },
   "scripts": {
     "build": "turbo build"
+  },
+  "engines": {
+    "node": "^20.10.0",
+    "pnpm": ">=8.15.5"
   },
   "keywords": [],
   "author": "",

@@ -60,7 +60,7 @@ const main = async () => {
     }),
   });
 
-  const client = builder(schema);
+  const client = builder(schema, "mbdev");
   const res = await client.query({
     pagination: {
       limit: 10,
@@ -68,6 +68,7 @@ const main = async () => {
     },
   });
   const value = await client.save([{}, res?.data?.items?.[0]]);
+
   const output1 = await res.next();
 
   const output2 = await output1.next();

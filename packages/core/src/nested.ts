@@ -50,6 +50,7 @@ export function zodUnpack<T extends z.ZodObject<any>>(
     const field: z.ZodType = zodSchema.shape[key];
     if (field.description?.startsWith(NESTED_FIELD)) {
       const [, nestedKey] = field.description?.split(NESTED_FIELD);
+      if (!nestedKey) continue;
       if (!parsed[nestedKey])
         parsed[nestedKey] =
           typeof input[nestedKey] === "string"
@@ -74,6 +75,7 @@ export function zodPack<T extends z.ZodObject<any>>(
     const field: z.ZodType = zodSchema.shape[key];
     if (field.description?.startsWith(NESTED_FIELD)) {
       const [, nestedKey] = field.description?.split(NESTED_FIELD);
+      if (!nestedKey) continue;
       if (input[nestedKey]) input[nestedKey] = {};
       input[nestedKey][key] = input[key];
       delete input[key];

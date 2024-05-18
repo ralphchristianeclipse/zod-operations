@@ -20,7 +20,10 @@ export function builder<
     TContext
   >
 >(client: TClient, contextCallback: TContextCallback) {
-  async function query(params: QueryOptions<Paths<TInput>>, context?: DeepPartial<TContext>) {
+  async function query(
+    params: QueryOptions<Paths<TInput>>,
+    context?: DeepPartial<TContext>
+  ) {
     const newContext = (await contextCallback(context)) as TContext;
     const result = await client.query(params, newContext);
     const validated = result?.records!?.map((record) => ({
@@ -95,7 +98,10 @@ export function builder<
     };
   }
 
-  async function save(records: Partial<TInput>[], context?: DeepPartial<TContext>) {
+  async function save(
+    records: Partial<TInput>[],
+    context?: DeepPartial<TContext>
+  ) {
     const newContext = (await contextCallback(context)) as TContext;
     //@ts-expect-error
     const recordsByAction = await check(records, newContext);
