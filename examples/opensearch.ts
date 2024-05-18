@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { zx } from "../packages/operations";
+import { zx } from "../packages/core";
 import { Client } from "@opensearch-project/opensearch";
 import builder from "./operations";
 import { defaultProvider } from "@aws-sdk/credential-provider-node";
@@ -37,8 +37,20 @@ const main = async () => {
     description: z.string().nullish(),
   });
 
-  const schema = GenericModelSchema.extend({
+  const schemaReport = GenericModelSchema.extend({
     type: zx.defaultLiteral("UsageReport"),
+    attributes: z.object({
+      module: z.string(),
+      action: z.string(),
+      userId: z.string(),
+      meta: z.any(),
+      description: z.string().nullish(),
+    }),
+  });
+
+  const schema = z.object({
+    __typename: zx.defaultLiteral("Project"),
+    title: z.string(),
     attributes: z.object({
       module: z.string(),
       action: z.string(),
@@ -55,13 +67,7 @@ const main = async () => {
       from: 20,
     },
   });
-  const value = await client.save([
-    {
-      id: "new",
-      code: "test",
-    },
-    res?.data?.items?.[0],
-  ]);
+  const value = await client.save([{}, res?.data?.items?.[0]]);
   const output1 = await res.next();
 
   const output2 = await output1.next();

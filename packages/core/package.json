@@ -1,5 +1,5 @@
 {
-  "name": "zod-operations",
+  "name": "@zod-operations/core",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
