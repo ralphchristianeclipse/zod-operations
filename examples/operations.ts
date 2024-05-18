@@ -1,4 +1,4 @@
-import { builder, zx } from "../packages/core";
+import { builder, zx } from "@zod-operations/core";
 import { getClient } from "./client";
 import { merge } from "lodash";
 import { z } from "zod";

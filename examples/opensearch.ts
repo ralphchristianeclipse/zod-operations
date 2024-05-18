@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { zx } from "../packages/core";
+import { zx } from "@zod-operations/core";
 import { Client } from "@opensearch-project/opensearch";
 import builder from "./operations";
 import { defaultProvider } from "@aws-sdk/credential-provider-node";

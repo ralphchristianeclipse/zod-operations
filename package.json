@@ -2,10 +2,6 @@
   "name": "zod-operations",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "directories": {
-    "example": "examples"
-  },
   "workspaces": [
     "packages/*"
   ],
@@ -25,6 +21,8 @@
     "@opensearch-project/opensearch": "^2.8.0",
     "aws-opensearch-connector": "^1.2.0",
     "lodash": "^4.17.21",
+    "packages": "link:G:/Development/Personal/zod-operations/packages",
+    "tsup": "^8.0.2",
     "turbo": "^1.13.3",
     "zod": "^3.23.8"
   }

@@ -2,12 +2,11 @@
   "name": "@zod-operations/core",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "exports": {
-    ".": "./src/index.ts"
+    "build": "tsup"
   },
   "keywords": [],
   "author": "",
