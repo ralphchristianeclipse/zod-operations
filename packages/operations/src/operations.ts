@@ -1,5 +1,6 @@
 import type {
   ClientOptions,
+  DeepPartial,
   Paths,
   PromiseCallback,
   QueryOptions,
@@ -19,7 +20,7 @@ export function builder<
     TContext
   >
 >(client: TClient, contextCallback: TContextCallback) {
-  async function query(params: QueryOptions<Paths<TInput>>, context?: any) {
+  async function query(params: QueryOptions<Paths<TInput>>, context?: DeepPartial<TContext>) {
     const newContext = (await contextCallback(context)) as TContext;
     const result = await client.query(params, newContext);
     const validated = result?.records!?.map((record) => ({
@@ -70,7 +71,7 @@ export function builder<
     };
   }
 
-  async function check(records: TInput[], context?: any) {
+  async function check(records: TInput[], context?: DeepPartial<TContext>) {
     const ids = records?.map(client.transformer.id);
     const found = await query(
       {
@@ -94,7 +95,7 @@ export function builder<
     };
   }
 
-  async function save(records: Partial<TInput>[], context?: any) {
+  async function save(records: Partial<TInput>[], context?: DeepPartial<TContext>) {
     const newContext = (await contextCallback(context)) as TContext;
     //@ts-expect-error
     const recordsByAction = await check(records, newContext);
@@ -124,7 +125,7 @@ export function builder<
     };
   }
 
-  async function remove(ids: StringNumber[], context) {
+  async function remove(ids: StringNumber[], context?: DeepPartial<TContext>) {
     const newContext = (await contextCallback(context)) as TContext;
     const result = ids?.length
       ? await client.mutation(
