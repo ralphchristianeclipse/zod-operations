@@ -93,20 +93,19 @@ async function loadRelations<
     throw new Error(`${schema._def.typeName} with ID ${id} not found`);
   }
 
-  const promises = Object.keys(config.relations).map(async (key) => {
-    const relationConfig = config.relations[key];
-    const isArray = Array.isArray(mainObject[relationConfig.field]);
-    const relatedIds = isArray
-      ? mainObject[relationConfig.field]
-      : [mainObject[relationConfig.field]];
-    const relatedData = await relationConfig.loader.loadMany(relatedIds);
-    return {
-      [key]: isArray ? relatedData : relatedData?.[0],
-    };
-  });
+  const promises = Object.entries(config.relations).map(
+    async ([key, relationConfig]) => {
+      const value = mainObject[relationConfig.field];
+      const isArray = Array.isArray(value);
+      const result = isArray
+        ? await relationConfig.loader.loadMany(value)
+        : await relationConfig.loader.load(value);
+      return [key, result];
+    }
+  );
 
   const relations = await Promise.all(promises);
-  return Object.assign({}, mainObject, ...relations);
+  return { ...mainObject, ...Object.fromEntries(relations) };
 }
 
 // Example usage
@@ -149,4 +148,6 @@ const projectsLoader = new DataLoader(async (ids) => {
   return results;
 });
 
-projectsLoader.loadMany(["1", "2"]).then((items) => console.log(items));
+projectsLoader.loadMany(["1", "2"]).then((items) => {
+  console.log(items);
+});
