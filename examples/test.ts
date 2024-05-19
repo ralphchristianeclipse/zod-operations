@@ -75,19 +75,6 @@ const projects: Project[] = [
 ];
 
 // Define DataLoader functions
-const taskLoader = new DataLoader<string, Task | undefined>(async (ids) => {
-  return ids.map((id) => tasks.find((task) => task.id === id));
-});
-
-const userLoader = new DataLoader<string, User | undefined>(async (ids) => {
-  return ids.map((id) => users.find((user) => user.id === id));
-});
-
-const projectLoader = new DataLoader<string, Project | undefined>(
-  async (ids) => {
-    return ids.map((id) => projects.find((project) => project.id === id));
-  }
-);
 
 // Generic function to load relations
 async function loadRelations<
@@ -124,6 +111,19 @@ async function loadRelations<
 
 // Example usage
 const projectsLoader = new DataLoader(async (ids) => {
+  const taskLoader = new DataLoader<string, Task | undefined>(async (ids) => {
+    return ids.map((id) => tasks.find((task) => task.id === id));
+  });
+
+  const userLoader = new DataLoader<string, User | undefined>(async (ids) => {
+    return ids.map((id) => users.find((user) => user.id === id));
+  });
+
+  const projectLoader = new DataLoader<string, Project | undefined>(
+    async (ids) => {
+      return ids.map((id) => projects.find((project) => project.id === id));
+    }
+  );
   const results = await Promise.all(
     ids.map((id) =>
       loadRelations(ProjectSchema, id as string, {
