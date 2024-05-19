@@ -34,7 +34,10 @@ type Config<T> = {
 };
 
 type LoadRelationsResult<T, R extends Record<string, any>> = T & {
-  [K in keyof R]: R[K] extends { field: infer TK; loader: DataLoader<string, infer U> }
+  [K in keyof R]: R[K] extends {
+    field: infer TK;
+    loader: DataLoader<string, infer U>;
+  }
     ? TK extends keyof T
       ? T[TK] extends any[]
         ? U[]
@@ -94,7 +97,7 @@ async function loadRelations<
   schema: T,
   id: string,
   config: C
-): Promise<LoadRelationsResult<T['_input'], C["relations"]>> {
+): Promise<LoadRelationsResult<T["_input"], C["relations"]>> {
   const mainLoader = config.loader;
 
   const mainObject = await mainLoader.load(id);
@@ -120,26 +123,30 @@ async function loadRelations<
 }
 
 // Example usage
-loadRelations(ProjectSchema, "1", {
-  loader: projectLoader,
-  relations: {
-    owner: {
-      field: "ownerId",
-      loader: userLoader,
-    },
-    tasks: {
-      field: "taskIds",
-      loader: taskLoader,
-    },
-    members: {
-      field: "memberIds",
-      loader: userLoader,
-    },
-  },
-})
-  .then((project) => {
-    console.log(JSON.stringify(project.owner, null, 2));
-  })
-  .catch((err) => {
-    console.error(err);
-  });
+const projectsLoader = new DataLoader(async (ids) => {
+  const results = await Promise.all(
+    ids.map((id) =>
+      loadRelations(ProjectSchema, id as string, {
+        loader: projectLoader,
+        relations: {
+          owner: {
+            field: "ownerId",
+            loader: userLoader,
+          },
+          tasks: {
+            field: "taskIds",
+            loader: taskLoader,
+          },
+          members: {
+            field: "memberIds",
+            loader: userLoader,
+          },
+        },
+      })
+    )
+  );
+
+  return results;
+});
+
+projectsLoader.loadMany(["1", "2"]).then((items) => console.log(items));
