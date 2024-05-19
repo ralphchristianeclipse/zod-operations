@@ -13,6 +13,8 @@
     "@aws-sdk/credential-provider-node": "^3.577.0",
     "@opensearch-project/opensearch": "^2.8.0",
     "@zod-operations/core": "workspace:*",
-    "aws-opensearch-connector": "^1.2.0"
+    "aws-opensearch-connector": "^1.2.0",
+    "dataloader": "^2.2.2",
+    "zod": "^3.23.8"
   }
 }
