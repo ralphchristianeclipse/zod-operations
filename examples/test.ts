@@ -36,7 +36,7 @@ type Config<T> = {
 type LoadRelationsResult<T, R extends Record<string, any>> = T & {
   [K in keyof R]: R[K] extends { field: infer TK; loader: DataLoader<string, infer U> }
     ? TK extends keyof T
-      ? T[TK] extends Array<any>
+      ? T[TK] extends any[]
         ? U[]
         : U | undefined
       : never
