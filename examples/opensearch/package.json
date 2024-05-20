@@ -15,6 +15,7 @@
     "@zod-operations/core": "workspace:*",
     "aws-opensearch-connector": "^1.2.0",
     "dataloader": "^2.2.2",
+    "lodash": "^4.17.21",
     "zod": "^3.23.8"
   }
 }
